@@ -56,7 +56,9 @@ RUN ln -s /usr/local/zeek-${VER} /zeek
 
 ENV PATH /zeek/bin/:$PATH
 ADD run.sh ./
+ADD process_pcap_folder.sh ./
 RUN chmod +x run.sh \
+    && chmod +x process_pcap_folder.sh \
     && mkdir -p /var/log/zeek/spool /var/log/zeek/logs
 
 ENTRYPOINT ["./run.sh"]
