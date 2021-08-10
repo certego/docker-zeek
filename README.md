@@ -3,13 +3,13 @@
 Build:
 
 ```
-sudo docker build -t certego/zeek:3.0.12 -f 3.0.12.Dockerfile .
+sudo docker build -t certego/zeek:4.0.2 -f 4.0.2.Dockerfile .
 ```
 
 Push
 
 ```
-sudo docker push certego/zeek:3.0.12
+sudo docker push certego/zeek:4.0.2
 ```
 
 # Managing GeoIP
