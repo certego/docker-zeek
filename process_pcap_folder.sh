@@ -2,7 +2,7 @@
 
 # Installing Zeek Packages
 zkg list | cut -d' ' -f1 > /tmp/packages.txt
-comm -3 /tmp/packages.txt /zeek/share/zeek/site/zeek-packages.txt  2>/dev/null > /tmp/to-install.txt
+comm -3 /tmp/packages.txt ${4}  2>/dev/null > /tmp/to-install.txt
 
 while IFS= read -r line; do
   zkg install --force $line
