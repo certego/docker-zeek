@@ -22,7 +22,7 @@ FROM debian:buster
 ENV VER 4.0.2
 #install runtime dependencies
 RUN apt-get update \
-    && apt-get -y install --no-install-recommends libpcap0.8 libssl1.1 libmaxminddb0 python cron \
+    && apt-get -y install --no-install-recommends libpcap0.8 libssl1.1 libmaxminddb0 python cron python3 python3-git python3-semantic-version \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/zeek-${VER} /usr/local/zeek-${VER}
