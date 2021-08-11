@@ -1,4 +1,14 @@
 #!/bin/sh
+
+# Installing Zeek Packages
+zkg list | cut -d' ' -f1 > /tmp/packages.txt
+comm -3 /tmp/packages.txt ${4}  2>/dev/null > /tmp/to-install.txt
+
+while IFS= read -r line; do
+  zkg install --force $line
+done < /tmp/to-install.txt
+
+
 #moving to tmp directory
 mkdir -p /tmp/zeek-files
 cd /tmp/zeek-files
