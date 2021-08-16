@@ -33,6 +33,7 @@ ENV PATH /zeek/bin/:$PATH
 ADD run.sh ./
 ADD live-analysis.sh ./
 ADD process_pcap_folder.sh ./
+RUN git config --global http.sslverify "false"
 RUN chmod +x run.sh \
     && chmod +x process_pcap_folder.sh \
     && chmod +x live-analysis.sh \
