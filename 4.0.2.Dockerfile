@@ -33,10 +33,12 @@ ENV PATH /zeek/bin/:$PATH
 ADD run.sh ./
 ADD live-analysis.sh ./
 ADD process_pcap_folder.sh ./
+ADD pcap-analysis-zkg.sh ./
 RUN git config --global http.sslverify "false"
 RUN chmod +x run.sh \
     && chmod +x process_pcap_folder.sh \
     && chmod +x live-analysis.sh \
+    && chmod +x pcap-analysis-zkg.sh \
     && mkdir -p /var/log/zeek/spool /var/log/zeek/logs
 
 ENTRYPOINT ["./run.sh"]

@@ -36,7 +36,7 @@ RUN apt-get install -y \
     --no-install-recommends
 
 
-ADD ./common/buildzeek ${WD}/common/buildzeek
+ADD ./common/buildzeek_tcmalloc ${WD}/common/buildzeek
 RUN echo "===> Compiling zeek..."
 # To enable tcmalloc, --enable-perftools must be passed to ./configure in buildzeek script
 RUN ${WD}/common/buildzeek zeek ${VER}
