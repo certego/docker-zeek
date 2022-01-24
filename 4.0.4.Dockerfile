@@ -1,4 +1,5 @@
 FROM debian:bullseye-slim as builder
+LABEL mantainer="f.foschini@certego.net"
 
 ENV WD /scratch
 ARG VER=4.0.4
