@@ -16,5 +16,7 @@ if [ ! -d ${ZEEK}-${VER} ]; then
     tar xvzf ${ZEEK}-${VER}.tar.gz
 fi
 cd ${ZEEK}-${VER}
-./configure --prefix=/usr/local/${ZEEK}-${VER} --build-type="${BUILD_TYPE}" --enable-perftools
-make -j4 install
+# configure reference https://github.com/zeek/zeek/blob/master/configure
+./configure --prefix=/usr/local/${ZEEK}-${VER} --generator=Ninja --build-type="${BUILD_TYPE}" --enable-perftools --disable-btest-pcaps --disable-broker-tests --disable-cpp-tests
+# make reference: https://github.com/zeek/zeek/blob/master/docker/Makefile
+ninja -C /usr/src/${ZEEK}-${VER}/build install
