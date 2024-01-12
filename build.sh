@@ -6,7 +6,7 @@ unset -v IMAGE
 unset -v VERSION
 
 usage() {
-  echo "Usage: $0 [-b] [-p] -i <production-nogeo|production-nogeo-ot|production-geo|tcmalloc-nogeo|tcmalloc> -v 5.0.8"
+  echo "Usage: $0 [-b] [-p] -i <production-nogeo|production-geo|tcmalloc-nogeo|tcmalloc> -v 5.0.10"
   echo ""
   echo "Options:"
   echo ""
@@ -45,7 +45,6 @@ if [[ $BUILD = true ]];
 then
     case $IMAGE in
         production-nogeo) echo "Bulding production (no GEOIP) Zeek ${VERSION}"; docker build --build-arg VER=${VERSION} -f build/zeek.dockerfile -t certego/zeek:${VERSION}-nogeo .;;
-        production-nogeo-ot) echo "Building OT (no GEOIP) Zeek ${VERSION}"; docker build --build-arg VER=${VERSION} -f build/zeekOT.dockerfile -t certego/zeek:${VERSION}-nogeo-ot .;;
         production-geo) echo "Bulding production Zeek with GEOIP ${VERSION}"; docker build --build-arg VER=${VERSION} --build-arg GEOIP=true -f build/zeek.dockerfile -t certego/zeek:${VERSION}-nogeo .;;
         tcmalloc-nogeo) echo "Bulding Tcmalloc (no GEOIP) Zeek ${VERSION}"; docker build --build-arg VER=${VERSION} -f build/zeek.dockerfile -t certego/zeek:tcmalloc_${VERSION}-nogeo .;;
         tcmalloc) echo "Bulding Tcmalloc Zeek with GEOIP ${VERSION}"; docker build --build-arg VER=${VERSION} --build-arg GEOIP=true -f build/zeek.dockerfile -t certego/zeek:tcmalloc_${VERSION} .;;
@@ -56,7 +55,6 @@ if [[ $PUSH = true ]];
 then
     case $IMAGE in
         production-nogeo) echo "Pushing certego/zeek:${VERSION}-nogeo (production no GEOIP)"; docker push certego/zeek:${VERSION}-nogeo;;
-        production-nogeo-ot) echo "Pushing certego/zeek:${VERSION}-nogeo-ot"; docker push certego/zeek:${VERSION}-nogeo-ot;;
         production-geo) echo "Pushing certego/zeek:${VERSION} (production with GEOIP)"; docker push certego/zeek:${VERSION};;
         tcmalloc-nogeo) echo "Pushing certego/zeek:tcmalloc_${VERSION}-nogeo (tcmalloc no GEOIP)"; docker push certego/zeek:tcmalloc_${VERSION}-nogeo;;
         tcmalloc) echo "Pushing certego/zeek:tcmalloc_${VERSION} (tcmalloc with GEOIP)"; docker push certego/zeek:tcmalloc_${VERSION};;

@@ -4,11 +4,10 @@ This is the Zeek Docker Image Certego repository.
 
 ## Dockerfiles
 
-There are three dockerfiles insied the `build` folder.
+There are two dockerfiles inside the `build` folder.
 
 1. `zeek.dockerfile` is the production ready image used to build Zeek.
-2. `zeekOT.dockerfile` is a clone of the production ready image with OT plugins compilation.
-3. `zeekTcmalloc.dockerfile` is a clone of the production ready image used to build Zeek with Tcmalloc.
+2. `zeekTcmalloc.dockerfile` is a clone of the production ready image used to build Zeek with Tcmalloc.
 
 ## Entrypoint
 
