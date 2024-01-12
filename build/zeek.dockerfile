@@ -5,7 +5,7 @@ LABEL mantainer="f.foschini@certego.net"
 # Directory to build zeek
 ENV WD=/scratch
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 5.0.9 as default value
-ARG VER=5.0.9
+ARG VER=5.0.10
 # GEOIP variable. If set to true when building image, it will copy maxmind db to correct directory. Otherwise database won't be copied
 ARG GEOIP=false
 
@@ -55,11 +55,70 @@ RUN echo "===> Compiling af_packet plugin..." \
     && make -j 4\
     && make install
 
+## Compiling OT parsers
+
+RUN echo "===> Compiling ICSNPP-Bacnet plugin" \
+    cd /usr/src \
+    && git clone https://github.com/cisagov/icsnpp-bacnet \
+    && cd icsnpp-bacnet \
+    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+    && make \
+    && make install
+
+RUN echo "===> Compiling ICSNPP-BSAP plugin" \
+    cd /usr/src \
+    && git clone https://github.com/cisagov/icsnpp-bsap.git \
+    && cd icsnpp-bsap \
+    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+    && make \
+    && make install
+
+RUN echo "===> Compiling ICSNPP-Ethercat plugin" \
+    cd /usr/src \
+    && git clone https://github.com/cisagov/icsnpp-ethercat \
+    && cd icsnpp-ethercat \
+    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+    && make \
+    && make install
+
+RUN echo "===> Compiling ICSNPP-ENIP plugin" \
+    cd /usr/src \
+    && git clone https://github.com/cisagov/icsnpp-enip \
+    && cd icsnpp-enip \
+    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+    && make \
+    && make install
+
+# To be activated if necessary
+# RUN echo "===> Compiling ICSNPP-OPCUA plugin" \
+#     cd /usr/src \
+#     && git clone https://github.com/cisagov/icsnpp-opcua-binary \
+#     && cd icsnpp-opcua-binary \
+#     && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+#     && make \
+#     && make install
+
+RUN echo "===> Compiling Profinet plugin" \
+    cd /usr/src \
+    && git clone https://github.com/amzn/zeek-plugin-profinet \
+    && cd zeek-plugin-profinet \
+    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+    && make \
+    && make install
+
+RUN echo "===> Compiling ICSNPP-S7COMM plugin" \
+    cd /usr/src \
+    && git clone https://github.com/cisagov/icsnpp-s7comm \
+    && cd icsnpp-s7comm \
+    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+    && make \
+    && make install
+
 
 # Make final image
 # Final Image reference https://github.com/zeek/zeek/blob/master/docker/final.Dockerfile
 FROM debian:bullseye-slim
-ARG VER=5.0.9
+ARG VER=5.0.10
 ARG GEOIP=false
 
 # Install run time dependencies

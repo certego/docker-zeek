@@ -5,7 +5,7 @@ LABEL mantainer="f.foschini@certego.net"
 # Directory to build zeek
 ENV WD=/scratch
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 5.0.9 as default value
-ARG VER=5.0.9
+ARG VER=5.0.10
 # GEOIP variable. If set to true when building image, it will copy maxmind db to correct directory. Otherwise database won't be copied
 ARG GEOIP=false
 
@@ -61,7 +61,7 @@ RUN echo "===> Compiling af_packet plugin..." \
 # Make final image
 # Final Image reference https://github.com/zeek/zeek/blob/master/docker/final.Dockerfile
 FROM debian:bullseye-slim
-ARG VER=5.0.9
+ARG VER=5.0.10
 ARG GEOIP=false
 
 # Install run time dependencies

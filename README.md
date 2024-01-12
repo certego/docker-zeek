@@ -4,7 +4,7 @@ This is the Zeek Docker Image Certego repository.
 
 ## Dockerfiles
 
-There are two dockerfiles insied the `build` folder.
+There are two dockerfiles inside the `build` folder.
 
 1. `zeek.dockerfile` is the production ready image used to build Zeek.
 2. `zeekTcmalloc.dockerfile` is a clone of the production ready image used to build Zeek with Tcmalloc.
@@ -17,7 +17,7 @@ The entrypoint used in both the dockerfiles is:
 
 ## Versioning
 
-By default, when building Zeek image, the version used will be `5.0.9`. To provide flexibility a variable named `VER` has been added to the dockerfile. By means of this variable it's possible to provide the version to build the image against.
+By default, when building Zeek image, the version used will be `5.0.10`. To provide flexibility a variable named `VER` has been added to the dockerfile. By means of this variable it's possible to provide the version to build the image against.
 
 So for instance:
 
