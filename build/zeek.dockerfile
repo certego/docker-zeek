@@ -1,11 +1,19 @@
 # Builder image reference: https://github.com/zeek/zeek/blob/master/docker/builder.Dockerfile
-FROM debian:bullseye-slim as builder
-LABEL mantainer="f.foschini@certego.net"
+FROM debian:bookworm-slim as builder
+
+# Make the shell split commands in the log so we can determine reasons for
+# failures more easily.
+SHELL ["/bin/sh", "-x", "-c"]
 
 # Directory to build zeek
 ENV WD=/scratch
-# Version variable. It can be specified when building image with --build-arg otherwise it will use 5.0.9 as default value
-ARG VER=5.0.10
+
+# Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
+ARG VER=7.0.0
+
+# Type of Zeek to build (Production ready or Debug)
+ARG BUILD_TYPE=Release
+
 # GEOIP variable. If set to true when building image, it will copy maxmind db to correct directory. Otherwise database won't be copied
 ARG GEOIP=false
 
@@ -13,140 +21,144 @@ ARG GEOIP=false
 WORKDIR ${WD}
 
 # Install necessary dependencies
-RUN apt-get update && apt-get upgrade -y
-RUN apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    # Not 100% sure needed but it is required according to zeek's documentation and very light (bind9)
     bind9 \
     bison \
+    # Useful to curl against zeek's site (ca-certificates)
     ca-certificates \
-    ccache \
     cmake  \
+    curl \
     flex \
     g++ \
     gcc \
     git \
     libfl2 \
     libfl-dev \
+    # Needed only if using GEOIP (but very light so not conditionally included) (libmaxminddb-dev)
     libmaxminddb-dev \
     libpcap-dev \
     libssl-dev \
+    # Not sure why needed but very light (libuv1-dev)
+    libuv1-dev \  
     libz-dev \
     make \
     ninja-build \
-    python3-minimal \
+    python3 \
     python3-dev \
-    python3-pip \
     swig \
-    wget \
-    --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-RUN echo "===> Compiling zeek..."
-COPY /common/buildzeek ${WD}/common/buildzeek 
-RUN ${WD}/common/buildzeek zeek ${VER}
 
-RUN echo "===> Compiling af_packet plugin..." \
-    cd /usr/src \
-    && git clone https://github.com/J-Gras/zeek-af_packet-plugin \
-    && cd zeek-af_packet-plugin \
-    && make distclean \
-    && ./configure --with-kernel=/usr \
-    --zeek-dist=/usr/src/zeek-${VER} \
-    && make -j 4\
-    && make install
+RUN <<EOF
+    set -eux
+    printf "Compiling Zeek...\n"
+    URL=https://download.zeek.org/zeek-${VER}.tar.gz
+    printf "Zeek's download URL %s\n" ${URL}
+
+    # Check Zeek archive existance
+    cd /usr/src
+    if test ! -e zeek-${VER}.tar.gz; then
+        curl -fsLO ${URL}
+    fi
+    # Check that curl didnt return an error
+    if test $? -eq 22; then
+        printf "There was an error while downloading Zeek... Exiting.\n"
+        exit 1
+    fi
+    # Remove previous duplicated/homonymes and extract Zeeks data
+    tar --recursive-unlink -zxf zeek-${VER}.tar.gz
+    cd zeek-${VER}
+    # configure reference https://github.com/zeek/zeek/blob/master/configure
+    ./configure --prefix=/usr/local/zeek-${VER} --generator=Ninja --build-type="${BUILD_TYPE}" --disable-broker-tests --disable-btest --disable-btest-pcaps --disable-cpp-tests --disable-javascript
+    ninja -C /usr/src/zeek-${VER}/build install
+EOF
 
 ## Compiling OT parsers
+RUN <<EOF
 
-RUN echo "===> Compiling ICSNPP-Bacnet plugin" \
-    cd /usr/src \
-    && git clone https://github.com/cisagov/icsnpp-bacnet \
-    && cd icsnpp-bacnet \
-    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
-    && make \
-    && make install
+# ln -s /usr/local/zeek-${VER}/include/zeek src/zeek is required to successfully use *.pac dependencies
+# as a matter of fact includes in *.pac files try to include files in ./*
+# This can be inspected by running the following command `binpac -D /path/to/pac/file.pac` (binpac executable must be compiled from auxil folder in zeek src)
 
-RUN echo "===> Compiling ICSNPP-BSAP plugin" \
-    cd /usr/src \
-    && git clone https://github.com/cisagov/icsnpp-bsap.git \
-    && cd icsnpp-bsap \
-    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
-    && make \
-    && make install
-
-RUN echo "===> Compiling ICSNPP-Ethercat plugin" \
-    cd /usr/src \
-    && git clone https://github.com/cisagov/icsnpp-ethercat \
-    && cd icsnpp-ethercat \
-    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
-    && make \
-    && make install
-
-RUN echo "===> Compiling ICSNPP-ENIP plugin" \
-    cd /usr/src \
-    && git clone https://github.com/cisagov/icsnpp-enip \
-    && cd icsnpp-enip \
-    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
-    && make \
-    && make install
-
+declare -A OT_plugins
+OT_plugins[ICSNPP-BSAP]="https://github.com/cisagov/icsnpp-bsap.git"
+OT_plugins[ICSNPP-Bacnet]="https://github.com/cisagov/icsnpp-bacnet"
+OT_plugins[ICSNPP-Ethercat]="https://github.com/cisagov/icsnpp-ethercat"
+OT_plugins[ICSNPP-ENIP]="https://github.com/cisagov/icsnpp-enip"
+OT_plugins[Zeek-Profinet]="https://github.com/amzn/zeek-plugin-profinet"
+OT_plugins[ICSNPP-S7COMM]="https://github.com/cisagov/icsnpp-s7comm"
 # To be activated if necessary
-# RUN echo "===> Compiling ICSNPP-OPCUA plugin" \
-#     cd /usr/src \
-#     && git clone https://github.com/cisagov/icsnpp-opcua-binary \
-#     && cd icsnpp-opcua-binary \
-#     && ./configure --zeek-dist=/usr/src/zeek-${VER} \
-#     && make \
-#     && make install
+#OT_plugins[ICSNPP-OPCUA]="https://github.com/cisagov/icsnpp-opcua-binary"
 
-RUN echo "===> Compiling Profinet plugin" \
-    cd /usr/src \
-    && git clone https://github.com/amzn/zeek-plugin-profinet \
-    && cd zeek-plugin-profinet \
-    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
-    && make \
-    && make install
 
-RUN echo "===> Compiling ICSNPP-S7COMM plugin" \
-    cd /usr/src \
-    && git clone https://github.com/cisagov/icsnpp-s7comm \
-    && cd icsnpp-s7comm \
-    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
-    && make \
-    && make install
+for plugin in "${!OT_plugins[@]}";
+do
+printf "===> Compiling %s plugin\n" ${plugin}
+cd /usr/src \
+&& git clone ${OT_plugins[$plugin]} ${plugin}\
+&& cd ${plugin} \
+&& ln -s /usr/local/zeek-${VER}/include/zeek src/zeek \
+&& ./configure --zeek-dist=/usr/src/zeek-${VER} \
+&& make \
+&& make install;
+/usr/local/zeek/bin/zeek -N | grep -i $(printf ${key} | awk -F- '{ print $1"::"$2 }')
+if test $? -eq 0; then
+printf "Successfully installed %s plugin.\n" ${plugin}
+else
+printf "Failed to install %s plugin.\n" ${plugin};
+exit 1;
+fi
+done
+EOF
 
 
 # Make final image
 # Final Image reference https://github.com/zeek/zeek/blob/master/docker/final.Dockerfile
-FROM debian:bullseye-slim
-ARG VER=5.0.10
+FROM debian:bookworm-slim as runner
+
+# Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
+ARG VER=7.0.0
+
+# Type of Zeek to build (Production ready or Debug)
+ARG BUILD_TYPE=Release
+
+# GEOIP variable. If set to true when building image, it will copy maxmind db to correct directory. Otherwise database won't be copied
 ARG GEOIP=false
 
 # Install run time dependencies
 RUN apt-get update \
-    && apt-get -y install \
-    --no-install-recommends \
+    && apt-get -y install --no-install-recommends \
     ca-certificates \
+    # Needed for entrypoint
     cron \
+    git \
+    # Needed only if using GEOIP (but very light so not conditionally included)
     libmaxminddb0 \
     libpcap0.8 \
-    libpython3.9 \
-    libssl1.1 \
+    libpython3.11 \
+    libssl3 \
+    # Not sure why needed but very light
+    libuv1 \
     libz1 \
-    python3-minimal \
+    python3 \
     python3-git \
     python3-semantic-version \
     python3-websocket \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/zeek-${VER} /usr/local/zeek-${VER}
+COPY --from=builder /usr/local/zeek-7.0 /tmp
 
 # Copy MaxMindDB only if GEOIP enabled
-COPY /geoip/*.mmdb /tmp/GEOIP/
-RUN if [ "${GEOIP}" = true ]; then \
-        mkdir /usr/share/GeoIP/; \
-        mv /tmp/GEOIP/*.mmdb /usr/share/GeoIP/; \
+RUN --mount=type=bind,source=/geoip/,target=/tmp/geoip/ <<EOF
+if [ "${GEOIP}" = true ]; then \
+    mkdir /usr/share/GeoIP/; \
+    mv /tmp/geoip/*.mmdb /usr/share/GeoIP/; \
 fi
+EOF
 
 RUN ln -s /usr/local/zeek-${VER} /zeek
 
