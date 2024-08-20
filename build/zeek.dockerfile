@@ -53,7 +53,6 @@ RUN apt-get update && \
 
 
 RUN <<EOF
-    set -eux
     printf "Compiling Zeek...\n"
     URL=https://download.zeek.org/zeek-${VER}.tar.gz
     printf "Zeek's download URL %s\n" ${URL}
