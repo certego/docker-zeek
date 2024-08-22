@@ -1,0 +1,37 @@
+#!/bin/bash -e
+
+# ln -s /usr/local/zeek-${VER}/include/zeek src/zeek is required to successfully use *.pac dependencies
+# as a matter of fact includes in *.pac files try to include files in ./*
+# This can be inspected by running the following command `binpac -D /path/to/pac/file.pac` (binpac executable must be compiled from auxil folder in zeek src)
+
+declare -A OT_plugins
+OT_plugins[ICSNPP-BSAP]="https://github.com/cisagov/icsnpp-bsap.git"
+OT_plugins[ICSNPP-Bacnet]="https://github.com/cisagov/icsnpp-bacnet"
+OT_plugins[ICSNPP-Ethercat]="https://github.com/cisagov/icsnpp-ethercat"
+OT_plugins[ICSNPP-ENIP]="https://github.com/cisagov/icsnpp-enip"
+OT_plugins[Zeek-Profinet]="https://github.com/amzn/zeek-plugin-profinet"
+OT_plugins[ICSNPP-S7COMM]="https://github.com/cisagov/icsnpp-s7comm"
+# To be activated if necessary
+#OT_plugins[ICSNPP-OPCUA]="https://github.com/cisagov/icsnpp-opcua-binary"
+
+
+for plugin in "${!OT_plugins[@]}";
+do
+    printf "===> Compiling %s plugin\n" ${plugin}
+    cd /usr/src \
+    && git clone ${OT_plugins[$plugin]} ${plugin}\
+    && cd ${plugin} \
+    && ln -s /usr/local/zeek-${VER}/include/zeek src/zeek \
+    && ./configure --zeek-dist=/usr/src/zeek-${VER} \
+    && make \
+    && make install;
+    # Entry on zeek -N will be the following
+    # ICSNPP::BACnet - BACnet Protocol analyzer (dynamic, version 1.4.0)
+    /usr/local/zeek-${VER}/bin/zeek -N | grep -i $(printf $plugin | awk -F- '{ print $1}')
+    if test $? -eq 0; then
+        printf "Successfully installed %s plugin.\n" ${plugin}
+    else
+        printf "Failed to install %s plugin.\n" ${plugin}
+        exit 1
+    fi
+done

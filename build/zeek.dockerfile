@@ -51,67 +51,11 @@ RUN apt-get update && \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-
-RUN <<EOF
-    printf "Compiling Zeek...\n"
-    URL=https://download.zeek.org/zeek-${VER}.tar.gz
-    printf "Zeek's download URL %s\n" ${URL}
-
-    # Check Zeek archive existance
-    cd /usr/src
-    if test ! -e zeek-${VER}.tar.gz; then
-        curl -fsLO ${URL}
-    fi
-    # Check that curl didnt return an error
-    if test $? -eq 22; then
-        printf "There was an error while downloading Zeek... Exiting.\n"
-        exit 1
-    fi
-    # Remove previous duplicated/homonymes and extract Zeeks data
-    tar --recursive-unlink -zxf zeek-${VER}.tar.gz
-    cd zeek-${VER}
-    # configure reference https://github.com/zeek/zeek/blob/master/configure
-    ./configure --prefix=/usr/local/zeek-${VER} --generator=Ninja --build-type="${BUILD_TYPE}" --disable-broker-tests --disable-btest --disable-btest-pcaps --disable-cpp-tests --disable-javascript
-    ninja -C /usr/src/zeek-${VER}/build install
-EOF
+# Build Zeek
+RUN --mount=type=bind,source=/common/buildzeek,target=/tmp/buildzeek /tmp/buildzeek ${VER} ${BUILD_TYPE}
 
 ## Compiling OT parsers
-RUN <<EOF
-
-# ln -s /usr/local/zeek-${VER}/include/zeek src/zeek is required to successfully use *.pac dependencies
-# as a matter of fact includes in *.pac files try to include files in ./*
-# This can be inspected by running the following command `binpac -D /path/to/pac/file.pac` (binpac executable must be compiled from auxil folder in zeek src)
-
-declare -A OT_plugins
-OT_plugins[ICSNPP-BSAP]="https://github.com/cisagov/icsnpp-bsap.git"
-OT_plugins[ICSNPP-Bacnet]="https://github.com/cisagov/icsnpp-bacnet"
-OT_plugins[ICSNPP-Ethercat]="https://github.com/cisagov/icsnpp-ethercat"
-OT_plugins[ICSNPP-ENIP]="https://github.com/cisagov/icsnpp-enip"
-OT_plugins[Zeek-Profinet]="https://github.com/amzn/zeek-plugin-profinet"
-OT_plugins[ICSNPP-S7COMM]="https://github.com/cisagov/icsnpp-s7comm"
-# To be activated if necessary
-#OT_plugins[ICSNPP-OPCUA]="https://github.com/cisagov/icsnpp-opcua-binary"
-
-
-for plugin in "${!OT_plugins[@]}";
-do
-printf "===> Compiling %s plugin\n" ${plugin}
-cd /usr/src \
-&& git clone ${OT_plugins[$plugin]} ${plugin}\
-&& cd ${plugin} \
-&& ln -s /usr/local/zeek-${VER}/include/zeek src/zeek \
-&& ./configure --zeek-dist=/usr/src/zeek-${VER} \
-&& make \
-&& make install;
-/usr/local/zeek/bin/zeek -N | grep -i $(printf ${key} | awk -F- '{ print $1"::"$2 }')
-if test $? -eq 0; then
-printf "Successfully installed %s plugin.\n" ${plugin}
-else
-printf "Failed to install %s plugin.\n" ${plugin};
-exit 1;
-fi
-done
-EOF
+RUN --mount=type=bind,source=/common/buildOTplugins,target=/tmp/buildOTplugins /tmp/buildOTplugins
 
 
 # Make final image
@@ -149,15 +93,14 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/zeek-7.0 /tmp
+COPY --from=builder /usr/local/zeek-7.0.0 /tmp
 
 # Copy MaxMindDB only if GEOIP enabled
-RUN --mount=type=bind,source=/geoip/,target=/tmp/geoip/ <<EOF
+RUN --mount=type=bind,source=/geoip/,target=/tmp/geoip/ \
 if [ "${GEOIP}" = true ]; then \
     mkdir /usr/share/GeoIP/; \
     mv /tmp/geoip/*.mmdb /usr/share/GeoIP/; \
 fi
-EOF
 
 RUN ln -s /usr/local/zeek-${VER} /zeek
 
