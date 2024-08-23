@@ -27,7 +27,7 @@ do
     && make install;
     # Entry on zeek -N will be the following
     # ICSNPP::BACnet - BACnet Protocol analyzer (dynamic, version 1.4.0)
-    /usr/local/zeek-${VER}/bin/zeek -N | grep -i $(printf $plugin | awk -F- '{ print $1}')
+    /usr/local/zeek-${VER}/bin/zeek -N | grep -i $(printf $plugin | awk -F- '{ print $1"::"$2 }')
     if test $? -eq 0; then
         printf "Successfully installed %s plugin.\n" ${plugin}
     else
