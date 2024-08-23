@@ -93,7 +93,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/zeek-7.0.0 /tmp/local/zeek-7.0.0
+COPY --from=builder /usr/local/zeek-7.0.0 /usr/local/zeek-7.0.0
 
 # Copy MaxMindDB only if GEOIP enabled
 RUN --mount=type=bind,source=/geoip/,target=/tmp/geoip/ \

@@ -21,4 +21,4 @@ tar --recursive-unlink -zxf zeek-${VER}.tar.gz
 cd zeek-${VER}
 # configure reference https://github.com/zeek/zeek/blob/master/configure
 ./configure --prefix=/usr/local/zeek-${VER} --generator=Ninja --build-type="${BUILD_TYPE}" --disable-broker-tests --disable-btest --disable-btest-pcaps --disable-cpp-tests --disable-javascript
-ninja -j 4 -C /usr/src/zeek-${VER}/build install
+ninja -C /usr/src/zeek-${VER}/build install
