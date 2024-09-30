@@ -9,7 +9,7 @@ SHELL ["/bin/sh", "-x", "-c"]
 ENV WD=/scratch
 
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
-ARG VER=7.0.0
+ARG VER=7.0.2
 
 # Type of Zeek to build (Production ready or Debug)
 ARG BUILD_TYPE=Release
@@ -63,7 +63,7 @@ RUN --mount=type=bind,source=/common/buildOTplugins,target=/tmp/buildOTplugins /
 FROM debian:bookworm-slim as runner
 
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
-ARG VER=7.0.0
+ARG VER=7.0.2
 
 # Type of Zeek to build (Production ready or Debug)
 ARG BUILD_TYPE=Release
@@ -93,7 +93,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/zeek-7.0.0 /usr/local/zeek-7.0.0
+COPY --from=builder /usr/local/zeek-${VER} /usr/local/zeek-${VER}
 
 # Copy MaxMindDB only if GEOIP enabled
 RUN --mount=type=bind,source=/geoip/,target=/tmp/geoip/ \
