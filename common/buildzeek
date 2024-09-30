@@ -1,22 +1,24 @@
 #!/bin/bash -e
-ZEEK=$1
-VER=$2
-BUILD_TYPE=${3-Release}
+VER=$1
+BUILD_TYPE=${2-Release}
 
-URL=https://download.zeek.org/${ZEEK}-${VER}.tar.gz
+printf "Compiling Zeek...\n"
+URL=https://download.zeek.org/zeek-${VER}.tar.gz
+printf "Zeek's download URL %s\n" ${URL}
 
-echo VER is $VER
-echo URL is $URL
-
-cd /usr/src/
-if [ ! -e ${ZEEK}-${VER}.tar.gz ] ; then 
-    wget -c $URL
+# Check Zeek archive existance
+cd /usr/src
+if test ! -e zeek-${VER}.tar.gz; then
+    curl -fsLO ${URL}
 fi
-if [ ! -d ${ZEEK}-${VER} ]; then
-    tar xvzf ${ZEEK}-${VER}.tar.gz
+# Check that curl didnt return an error
+if test $? -eq 22; then
+    printf "There was an error while downloading Zeek... Exiting.\n"
+    exit 1
 fi
-cd ${ZEEK}-${VER}
+# Remove previous duplicated/homonymes and extract Zeeks data
+tar --recursive-unlink -zxf zeek-${VER}.tar.gz
+cd zeek-${VER}
 # configure reference https://github.com/zeek/zeek/blob/master/configure
-./configure --prefix=/usr/local/${ZEEK}-${VER} --generator=Ninja --build-type="${BUILD_TYPE}" --disable-btest-pcaps --disable-broker-tests --disable-cpp-tests
-# make reference: https://github.com/zeek/zeek/blob/master/docker/Makefile
-ninja -C /usr/src/${ZEEK}-${VER}/build install
+./configure --prefix=/usr/local/zeek-${VER} --generator=Ninja --build-type="${BUILD_TYPE}" --disable-broker-tests --disable-btest --disable-btest-pcaps --disable-cpp-tests --disable-javascript
+ninja -C /usr/src/zeek-${VER}/build install
