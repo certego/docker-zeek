@@ -17,14 +17,14 @@ The entrypoint used in both the dockerfiles is:
 
 ## Versioning
 
-By default, when building Zeek image, the version used will be `7.0.5`. 
+By default, when building Zeek image, the version used will be `7.0.6`. 
 
 To improve flexibility, a variable named `VER` has been added to the dockerfile. By means of this variable it's possible to provide the version to build the image against.
 
 So, for instance:
 
 ```
-docker build -t zeek_test:7.0.5 -f build/zeek.dockerfile --build-arg VER=7.0.5 .
+docker build -t zeek_test:7.0.6 -f build/zeek.dockerfile --build-arg VER=7.0.6 .
 ```
 
 By using the build argument `VER` we can specify the version of Zeek we want to build.
@@ -36,7 +36,7 @@ By default, when building Zeek image, GEOIP **will not** be used. However, to ke
 So, for instance:
 
 ```
-docker build -t zeek_test:7.0.5 -f build/zeek.dockerfile --build-arg VER=7.0.5 --build-arg GEOIP=true .
+docker build -t zeek_test:7.0.6 -f build/zeek.dockerfile --build-arg VER=7.0.6 --build-arg GEOIP=true .
 ```
 
 By using the build argument `GEOIP` we can enable the use of GEOIP.
