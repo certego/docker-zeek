@@ -9,7 +9,7 @@ SHELL ["/bin/sh", "-x", "-c"]
 ENV WD=/scratch
 
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
-ARG VER=7.0.10
+ARG VER=7.0.11
 
 # Type of Zeek to build (Production ready or Debug)
 ARG BUILD_TYPE=Release
@@ -63,7 +63,7 @@ RUN --mount=type=bind,source=/common/buildOTplugins,target=/tmp/buildOTplugins /
 FROM debian:bookworm-slim as runner
 
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
-ARG VER=7.0.10
+ARG VER=7.0.11
 
 # Type of Zeek to build (Production ready or Debug)
 ARG BUILD_TYPE=Release
