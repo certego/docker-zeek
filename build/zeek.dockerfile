@@ -1,5 +1,5 @@
 # Builder image reference: https://github.com/zeek/zeek/blob/master/docker/builder.Dockerfile
-FROM debian:bookworm-slim as builder
+FROM debian:trixie-slim as builder
 
 # Make the shell split commands in the log so we can determine reasons for
 # failures more easily.
@@ -9,7 +9,7 @@ SHELL ["/bin/sh", "-x", "-c"]
 ENV WD=/scratch
 
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
-ARG VER=7.0.11
+ARG VER=8.0.10
 
 # Type of Zeek to build (Production ready or Debug)
 ARG BUILD_TYPE=Release
@@ -29,6 +29,8 @@ RUN apt-get update && \
     # Useful to curl against zeek's site (ca-certificates)
     ca-certificates \
     cmake  \
+    # From Zeek 8, by default, compilation and execution depend on the availability of the ZeroMQ library, this is in preparation of switching to the ZeroMQ-based cluster backend; this package is therefore required
+    cppzmq-dev \
     curl \
     flex \
     g++ \
@@ -43,6 +45,9 @@ RUN apt-get update && \
     # Not sure why needed but very light (libuv1-dev)
     libuv1-dev \  
     libz-dev \
+    # From Zeek 8, by default, compilation and execution depend on the availability of the ZeroMQ library, this is in preparation of switching to the ZeroMQ-based cluster backend; these two packages are therefore required
+    libzmq5 \
+    libzmq3-dev \
     make \
     ninja-build \
     python3 \
@@ -60,10 +65,10 @@ RUN --mount=type=bind,source=/common/buildOTplugins,target=/tmp/buildOTplugins /
 
 # Make final image
 # Final Image reference https://github.com/zeek/zeek/blob/master/docker/final.Dockerfile
-FROM debian:bookworm-slim as runner
+FROM debian:trixie-slim as runner
 
 # Version variable. It can be specified when building image with --build-arg otherwise it will use 6.0.4 as default value
-ARG VER=7.0.11
+ARG VER=8.0.10
 
 # Type of Zeek to build (Production ready or Debug)
 ARG BUILD_TYPE=Release
@@ -81,15 +86,17 @@ RUN apt-get update \
     # Needed only if using GEOIP (but very light so not conditionally included)
     libmaxminddb0 \
     libpcap0.8 \
-    libpython3.11 \
     libssl3 \
     # Not sure why needed but very light
     libuv1 \
-    libz1 \
+    libzmq5 \
     python3 \
     python3-git \
     python3-semantic-version \
     python3-websocket \
+    # The new ZeroMQ-based cluster backend needs this package. I’m not sure, however, how useful the package above is ("python3-websocket"), but as it doesn’t cause any conflicts, i won’t remove it.
+    python3-websockets \
+    zlib1g \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
